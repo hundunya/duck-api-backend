@@ -1,0 +1,41 @@
+server:
+  port: 8200
+spring:
+  # redis配置
+  redis:
+    host: 127.0.0.1
+    port: 6379
+  cloud:
+    gateway:
+      redis-rate-limiter:
+        config:
+          defaultFilters:
+            replenishRate: 15000
+            burstCapacity: 10000
+#            requestedTokens: 1
+
+#      routes:
+#        - id: after_route
+#          uri: https://www.baidu.com
+#          predicates:
+#            - After=2017-01-20T17:42:47.789-07:00[America/Denver]
+# dubbo配置
+dubbo:
+  application:
+    name: dubbo-springboot-gateway-consumer
+    qos-enable: true
+    qos-port: 33333
+    qos-accept-foreign-ip: false
+  protocol:
+    name: dubbo
+    port: -1
+  registry:
+    address: zookeeper://${zookeeper.address:127.0.0.1}:2181
+    timeout: 10000
+  consumer:
+    filter: -exception
+    # 超时时间
+    timeout: 10000
+
+
+

@@ -1,0 +1,9 @@
+# dubbo配置
+dubbo:
+  consumer:
+    filter: customExceptionFilter
+  provider:
+    filter: customExceptionFilter
+
+
+

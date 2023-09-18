@@ -1,0 +1,1 @@
+customExceptionFilter=cn.hdy.common.project.filter.CustomExceptionFilter

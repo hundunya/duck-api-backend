@@ -1,0 +1,8 @@
+server:
+  port: 8100
+  servlet:
+    context-path: /api
+duck:
+  api:
+    access-key: DidiDuck
+    secret-key: DidiDuck

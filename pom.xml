@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>2.7.15</version>
+        <relativePath/> <!-- lookup parent from repository -->
+    </parent>
+    <groupId>cn.hdy</groupId>
+    <artifactId>duckapi-parent</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>duckapi-parent</name>
+    <description>duckapi-parent</description>
+
+    <packaging>pom</packaging>
+    <modules>
+        <module>duckapi-backend</module>
+        <module>duckapi-common</module>
+        <module>duckapi-gateway</module>
+        <module>duckapi-api</module>
+    </modules>
+
+    <properties>
+        <java.version>11</java.version>
+        <spring-cloud.version>2021.0.8</spring-cloud.version>
+    </properties>
+    <dependencyManagement>
+        <dependencies>
+            <!--登录权限校验-->
+            <!-- https://mvnrepository.com/artifact/com.auth0/java-jwt -->
+            <dependency>
+                <groupId>com.auth0</groupId>
+                <artifactId>java-jwt</artifactId>
+                <version>4.4.0</version>
+            </dependency>
+            <!--阿里支付-->
+            <!-- https://mvnrepository.com/artifact/com.alipay.sdk/alipay-sdk-java -->
+            <dependency>
+                <groupId>com.alipay.sdk</groupId>
+                <artifactId>alipay-sdk-java</artifactId>
+                <version>4.38.0.ALL</version>
+            </dependency>
+            <!--腾讯云cos服务-->
+            <!--suppress VulnerableLibrariesLocal -->
+            <dependency>
+                <groupId>com.qcloud</groupId>
+                <artifactId>cos_api</artifactId>
+                <version>5.6.159</version>
+            </dependency>
+            <dependency>
+                <groupId>com.alibaba.fastjson2</groupId>
+                <artifactId>fastjson2</artifactId>
+                <version>2.0.33</version>
+            </dependency>
+            <dependency>
+                <groupId>org.mybatis.spring.boot</groupId>
+                <artifactId>mybatis-spring-boot-starter</artifactId>
+                <version>2.3.1</version>
+            </dependency>
+            <dependency>
+                <groupId>org.mybatis.spring.boot</groupId>
+                <artifactId>mybatis-spring-boot-starter-test</artifactId>
+                <version>2.3.1</version>
+                <scope>test</scope>
+            </dependency>
+            <!-- https://mvnrepository.com/artifact/com.baomidou/mybatis-plus-boot-starter -->
+            <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-boot-starter</artifactId>
+                <version>3.5.2</version>
+            </dependency>
+            <dependency>
+                <groupId>cn.hutool</groupId>
+                <artifactId>hutool-all</artifactId>
+                <version>5.8.21</version>
+            </dependency>
+            <!-- https://doc.xiaominfo.com/knife4j/documentation/get_start.html-->
+            <dependency>
+                <groupId>com.github.xiaoymin</groupId>
+                <artifactId>knife4j-spring-boot-starter</artifactId>
+                <version>3.0.3</version>
+            </dependency>
+            <!-- https://mvnrepository.com/artifact/com.google.code.gson/gson -->
+            <dependency>
+                <groupId>com.google.code.gson</groupId>
+                <artifactId>gson</artifactId>
+                <version>2.9.1</version>
+            </dependency>
+            <dependency>
+                <groupId>cn.hdy</groupId>
+                <artifactId>duckapi-sdk-client</artifactId>
+                <version>0.0.1-SNAPSHOT</version>
+            </dependency>
+
+            <!-- dubbo -->
+            <!--suppress VulnerableLibrariesLocal -->
+            <dependency>
+                <groupId>org.apache.dubbo</groupId>
+                <artifactId>dubbo-spring-boot-starter</artifactId>
+                <version>3.2.0</version>
+                <exclusions>
+                    <exclusion>
+                        <artifactId>slf4j-reload4j</artifactId>
+                        <groupId>org.slf4j</groupId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.zookeeper</groupId>
+                <artifactId>zookeeper</artifactId>
+                <version>3.8.1</version>
+            </dependency>
+            <!-- https://mvnrepository.com/artifact/com.101tec/zkclient -->
+            <dependency>
+                <groupId>com.101tec</groupId>
+                <artifactId>zkclient</artifactId>
+                <version>0.11</version>
+            </dependency>
+
+            <!-- https://mvnrepository.com/artifact/org.apache.curator/curator-recipes -->
+            <!--suppress VulnerableLibrariesLocal -->
+            <dependency>
+                <groupId>org.apache.curator</groupId>
+                <artifactId>curator-recipes</artifactId>
+                <version>5.4.0</version>
+            </dependency>
+            <!-- https://mvnrepository.com/artifact/org.apache.curator/curator-x-discovery -->
+            <dependency>
+                <groupId>org.apache.curator</groupId>
+                <artifactId>curator-x-discovery</artifactId>
+                <version>5.4.0</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+</project>
