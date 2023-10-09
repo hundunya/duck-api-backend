@@ -1,48 +1,48 @@
-package cn.hdy.common.project.model.entity;
+package cn.hdy.backend.project.model.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
-import lombok.Data;
 
 import java.io.Serializable;
 import java.util.Date;
+import lombok.Data;
 
 /**
- * 接口信息表
+ * 金币商城
  * @author 滴滴鸭
  */
-@TableName(value ="user_interface")
+@TableName(value ="gold_coin_goods")
 @Data
-public class UserInterface implements Serializable {
+public class GoldCoinGoods implements Serializable {
     /**
-     * 主键
+     * 主键ID
      */
     @TableId(type = IdType.AUTO)
     private Long id;
 
     /**
-     * 用户ID
+     * 商品名称
      */
-    private Long userId;
+    private String name;
 
     /**
-     * 接口ID
+     * 商品描述
      */
-    private Long interfaceId;
+    private String description;
 
     /**
-     * 接口总调用次数
+     * 金币数量
      */
-    private Integer totalNum;
+    private Integer number;
 
     /**
-     * 接口剩余调用次数
+     * 商品价格，默认为0
      */
-    private Integer leftNum;
+    private Double price;
 
     /**
-     * 状态(0-正常，1-关闭)
+     * 创建者
      */
-    private Integer status;
+    private Long createUser;
 
     /**
      * 创建时间
@@ -55,7 +55,7 @@ public class UserInterface implements Serializable {
     private Date updateTime;
 
     /**
-     * 逻辑删除(0-正常，1-删除)
+     * 逻辑删除，0-正常，1-删除
      */
     @TableLogic
     private Integer isDelete;

@@ -34,14 +34,14 @@ public class LoginUserVO implements Serializable {
     private String signature;
 
     /**
-     * 用户简介
-     */
-    private String userProfile;
-
-    /**
      * 用户角色：user/admin/ban
      */
     private String userRole;
+
+    /**
+     * 金币余额
+     */
+    private Integer goldCoinBalance;
 
     /**
      * 创建时间

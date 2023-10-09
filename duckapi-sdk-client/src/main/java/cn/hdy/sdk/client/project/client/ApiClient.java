@@ -25,7 +25,9 @@ import java.util.Map;
 public class ApiClient {
     private String accessKey;
     private String secretKey;
-    private final String BASE_URL = "http://localhost:8200/api";
+//    private final String BASE_URL = "http://localhost:8200/api";
+//    private final String BASE_URL = "https://duck-api-interface.hundunya.cn/api";
+    private final String BASE_URL = "http://110.41.15.223:8200/api";
 
     private final Gson GSON = new Gson();
 
@@ -98,6 +100,7 @@ public class ApiClient {
      */
     @SuppressWarnings("rawtypes")
     public String execute(String url, String method, String param, String requestHeader, String requestParam) {
+        long startTime = System.currentTimeMillis();
         // 1.解析请求头、请求参数以及前端传入的参数
         Map<String, String> paramMap = ApiUtils.parseInputParam(param);
         Map<String, String> requestHeaderMap = ApiUtils.parseHeader(requestHeader);
@@ -128,10 +131,16 @@ public class ApiClient {
         // 4.发送请求
         HttpRequest request = ApiUtils.getRequestByMethod(BASE_URL+url, method);
         request.body(param).addHeaders(headers);
+        long endTime = System.currentTimeMillis();
+        log.info("参数封装耗时: {}毫秒", endTime - startTime);
         HttpResponse response;
         try {
+            startTime = System.currentTimeMillis();
             response = request.execute();
+            endTime = System.currentTimeMillis();
+            log.info("请求耗时: {}毫秒", endTime - startTime);
         } catch (Exception e) {
+            e.printStackTrace();
             return "接口不存在";
         }
         try (response) {

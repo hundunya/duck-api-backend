@@ -13,4 +13,10 @@ public interface InnerInterfaceInfoService {
      * @return 接口信息
      */
     InterfaceInfo getInterfaceInfo(String path, String method);
+
+    /**
+     * 接口调用计数
+     * @param interfaceId 接口ID
+     */
+    void invokeCount(long interfaceId);
 }

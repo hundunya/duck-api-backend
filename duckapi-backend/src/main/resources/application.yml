@@ -13,7 +13,7 @@ spring:
   # session 配置
   session:
     # todo 取消注释开启分布式 session（须先配置 Redis）
-    # store-type: redis
+    store-type: redis
     # 30 天过期
     timeout: 2592000
   # 数据库配置
@@ -25,7 +25,7 @@ spring:
     password: Yang0122
   # RabbitMQ 配置
   rabbitmq:
-    host: localhost
+    host: 43.138.159.214
     port: 5672
     username: guest
     password: guest
@@ -37,14 +37,13 @@ spring:
   # todo 需替换配置，然后取消注释
 #  redis:
 #    database: 1
-#    host: localhost
+#    host: 8.137.49.206
 #    port: 6379
 #    timeout: 5000
-#    password: 123456
   # 腾讯云配置
   tencent:
-    SecretId: AKIDOcyKb2QgwQoGjHm8E954ScdP0axCKPMG
-    SecretKey: shmpjQuHPIxSoHg3Ia8czOhssehDjKwT
+    SecretId: AKIDjHfw1sVuAFIAq8C5lIepxugJk7TebO3f
+    SecretKey: b5bzBEHCuSs7CAxkcLrCNNIH7lGbqunc
     region: ap-chengdu
     bucketName: duck-image-1318500509
 server:
@@ -80,7 +79,12 @@ dubbo:
     name: dubbo
     port: -1
   registry:
-    address: zookeeper://${zookeeper.address:127.0.0.1}:2181
+    id: nacos-registry
+    address: nacos://8.137.49.206:8848
   provider:
     filter: -exception
     load-balance: round-robin
+    timeout: 10000
+    host: localhost
+  scan:
+    base-packages: cn.hdy.common.project.service

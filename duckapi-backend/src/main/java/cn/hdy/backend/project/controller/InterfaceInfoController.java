@@ -12,12 +12,11 @@ import cn.hdy.backend.project.model.dto.interfaceinfo.InvokeInterfaceParamReques
 import cn.hdy.backend.project.model.enums.InterfaceStatusEnum;
 import cn.hdy.backend.project.model.vo.InterfaceInfoVO;
 import cn.hdy.backend.project.service.InterfaceInfoService;
-import cn.hdy.backend.project.service.UserInterfaceService;
 import cn.hdy.backend.project.service.UserService;
 import cn.hdy.common.project.model.entity.InterfaceInfo;
 import cn.hdy.common.project.model.entity.User;
-import cn.hdy.common.project.model.entity.UserInterface;
 import cn.hdy.sdk.client.project.client.ApiClient;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.extern.slf4j.Slf4j;
@@ -27,8 +26,12 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
-import static cn.hdy.backend.project.constant.UserConstant.LEFT_NUM;
+import static cn.hdy.backend.project.model.enums.InterfaceStatusEnum.ONLINE;
 
 /**
  * API信息接口
@@ -47,10 +50,9 @@ public class InterfaceInfoController {
     private UserService userService;
 
     @Resource
-    private UserInterfaceService userInterfaceService;
-
-    @Resource
     private ApiClient apiClient;
+
+    private final ExecutorService threadPool = Executors.newFixedThreadPool(10);
 
     // region 增删改查
 
@@ -157,10 +159,6 @@ public class InterfaceInfoController {
      */
     @GetMapping("/get/vo")
     public BaseResponse<InterfaceInfoVO> getInterfaceInfoVoById(long id, HttpServletRequest request) {
-        User loginUser = userService.getLoginUser(request);
-        if (loginUser == null) {
-            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
-        }
         if (id <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
@@ -170,16 +168,6 @@ public class InterfaceInfoController {
             throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
         }
         InterfaceInfoVO interfaceInfoVO = interfaceInfoService.getInterfaceInfoVO(interfaceInfo, request);
-        // 给接口设置默认剩余调用次数
-        interfaceInfoVO.setLeftNum(LEFT_NUM);
-        // 查询接口剩余调用次数
-        QueryWrapper<UserInterface> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("user_id", loginUser.getId());
-        queryWrapper.eq("interface_id", interfaceInfo.getId());
-        UserInterface userInterface = userInterfaceService.getOne(queryWrapper);
-        if (userInterface != null) {
-            interfaceInfoVO.setLeftNum(userInterface.getLeftNum());
-        }
         return ResultUtils.success(interfaceInfoVO);
     }
 
@@ -199,6 +187,30 @@ public class InterfaceInfoController {
         ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
         Page<InterfaceInfo> interfaceInfoPage = interfaceInfoService.page(new Page<>(current, size),
                 interfaceInfoService.getQueryWrapper(interfaceInfoQueryRequest));
+        return ResultUtils.success(interfaceInfoService.getInterfaceInfoVoPage(interfaceInfoPage, request));
+    }
+
+    /**
+     * 分页获取列表（封装类）
+     *
+     * @param interfaceInfoQueryRequest 接口信息查询实体
+     * @return 分页查询结果
+     */
+    @SuppressWarnings("uncheck")
+    @PostMapping("/list/query/vo")
+    public BaseResponse<Page<InterfaceInfoVO>> listInterfaceInfoVoByNameOrDescription(@RequestBody InterfaceInfoQueryRequest interfaceInfoQueryRequest,
+                                                                         HttpServletRequest request) {
+        long current = interfaceInfoQueryRequest.getCurrent();
+        long size = interfaceInfoQueryRequest.getPageSize();
+        // 限制爬虫
+        ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
+        String name = interfaceInfoQueryRequest.getName();
+        String description = interfaceInfoQueryRequest.getDescription();
+        QueryWrapper<InterfaceInfo> queryWrapper = new QueryWrapper<>();
+        queryWrapper.or().like(!StrUtil.isBlank(name), "name", name);
+        queryWrapper.or().like(!StrUtil.isBlank(description), "description", description);
+        queryWrapper.eq("status", ONLINE.getValue());
+        Page<InterfaceInfo> interfaceInfoPage = interfaceInfoService.page(new Page<>(current, size), queryWrapper);
         return ResultUtils.success(interfaceInfoService.getInterfaceInfoVoPage(interfaceInfoPage, request));
     }
 
@@ -231,7 +243,7 @@ public class InterfaceInfoController {
         boolean success = apiClient.execute(url, method, requestHeader, requestParam);
         ThrowUtils.throwIf(!success, ErrorCode.PARAMS_ERROR, "接口无法访问，发布失败");
         // 发布接口
-        interfaceInfo.setStatus(InterfaceStatusEnum.ONLINE.getValue());
+        interfaceInfo.setStatus(ONLINE.getValue());
         boolean result = interfaceInfoService.updateById(interfaceInfo);
         return ResultUtils.success(result);
     }
@@ -272,53 +284,45 @@ public class InterfaceInfoController {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
         long id = invokeInterfaceParamRequest.getId();
-        // 1.判断接口是否存在
-        InterfaceInfo interfaceInfo = interfaceInfoService.getById(id);
-        ThrowUtils.throwIf(interfaceInfo == null, ErrorCode.NOT_FOUND_ERROR);
-        User loginUser = userService.getLoginUser(request);
-        ThrowUtils.throwIf(loginUser == null, ErrorCode.NOT_LOGIN_ERROR);
-        // 接口调试
-        ApiClient client = new ApiClient();
-        client.setAccessKey(loginUser.getAccessKey());
-        client.setSecretKey(loginUser.getSecretKey());
-        // 2.获取接口所需参数
-        String url = interfaceInfo.getUrl();
-        String method = interfaceInfo.getMethod();
-        String requestHeader = interfaceInfo.getRequestHeader();
-        String requestParam = interfaceInfo.getRequestParam();
-        String param = invokeInterfaceParamRequest.getParam();
-        // 3.调用接口
-        String result = client.execute(url, method, param, requestHeader, requestParam);
+        // 同步线程池并发控制
+        String result;
+        Future<String> future = threadPool.submit(() -> {
+            // 1.判断接口是否存在
+            InterfaceInfo interfaceInfo = interfaceInfoService.getById(id);
+            ThrowUtils.throwIf(interfaceInfo == null, ErrorCode.NOT_FOUND_ERROR);
+            User loginUser = userService.getLoginUser(request);
+            ThrowUtils.throwIf(loginUser.getGoldCoinBalance() < interfaceInfo.getPrice(), ErrorCode.OPERATION_ERROR, "金币余额不足");
+            // 接口调试
+            ApiClient client = new ApiClient();
+            client.setAccessKey(loginUser.getAccessKey());
+            client.setSecretKey(loginUser.getSecretKey());
+            // 2.获取接口所需参数
+            String url = interfaceInfo.getUrl();
+            String method = interfaceInfo.getMethod();
+            String requestHeader = interfaceInfo.getRequestHeader();
+            String requestParam = interfaceInfo.getRequestParam();
+            String param = invokeInterfaceParamRequest.getParam();
+            // 3.调用接口
+            return client.execute(url, method, param, requestHeader, requestParam);
+        });
+        try {
+            result = future.get();
+            log.info("==============================");
+            log.info("接口调用响应结果: {}", result);
+            log.info("==============================");
+        } catch (ExecutionException executionException) {
+            Throwable e = executionException.getCause();
+            log.info("==============================");
+            log.info("接口调用异常信息: {}", e.getMessage());
+            log.info("==============================");
+            if (e instanceof BusinessException){
+                throw (BusinessException) e;
+            }else {
+                throw new BusinessException(ErrorCode.SYSTEM_ERROR);
+            }
+        } catch (InterruptedException e) {
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR);
+        }
         return ResultUtils.success(result);
     }
-
-    /**
-     * 获取接口剩余调用次数
-     *
-     * @param interfaceId 接口ID
-     * @return 剩余调用次数
-     */
-    @GetMapping("/get/interface/leftNum")
-    public BaseResponse<Integer> getInterfaceLeftNum(long interfaceId, HttpServletRequest request) {
-        if (interfaceId <= 0) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR);
-        }
-        // 判断接口是否存在
-        InterfaceInfo interfaceInfo = interfaceInfoService.getById(interfaceId);
-        ThrowUtils.throwIf(interfaceInfo == null, ErrorCode.NOT_FOUND_ERROR);
-        User loginUser = userService.getLoginUser(request);
-        ThrowUtils.throwIf(loginUser == null, ErrorCode.NOT_LOGIN_ERROR);
-        //获取剩余调用次数
-        QueryWrapper<UserInterface> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("user_id", loginUser.getId());
-        queryWrapper.eq("interface_id", interfaceInfo.getId());
-        UserInterface userInterface = userInterfaceService.getOne(queryWrapper);
-        Integer leftNum = LEFT_NUM;
-        if (userInterface != null) {
-            leftNum = userInterface.getLeftNum();
-        }
-        return ResultUtils.success(leftNum);
-    }
-
-
 }

@@ -60,7 +60,7 @@ public class InterfaceInfoUpdateRequest implements Serializable {
     /**
      * 接口调用一次的单价
      */
-    private Double price;
+    private Integer price;
 
     /**
      * 接口状态(0-关闭，1-关闭)

@@ -66,7 +66,12 @@ public class InterfaceInfoVO implements Serializable {
     /**
      * 接口调用一次的单价
      */
-    private Double price;
+    private Integer price;
+
+    /**
+     * 接口总调用次数
+     */
+    private Long totalNum;
 
     /**
      * 接口状态(0-关闭，1-关闭)
@@ -82,11 +87,6 @@ public class InterfaceInfoVO implements Serializable {
      * 创建时间
      */
     private Date createTime;
-
-    /**
-     * 剩余调用次数
-     */
-    private Integer leftNum;
 
     /**
      * 包装类转对象

@@ -19,8 +19,10 @@ public class RouteConfig {
     private CustomApiResponseRewrite customApiResponseRewrite;
     @Resource
     private CustomRedisRateLimiter customRedisRateLimiter;
-    @Resource(name = "ipKeyResolver")
-    private KeyResolver ipKeyResolver;
+//    @Resource(name = "ipKeyResolver")
+//    private KeyResolver ipKeyResolver;
+    @Resource(name = "pathKeyResolver")
+    private KeyResolver pathKeyResolver;
     @Resource
     private ApiGatewayFilter apiGatewayFilter;
 
@@ -33,7 +35,8 @@ public class RouteConfig {
                             f.modifyResponseBody(String.class, String.class, customApiResponseRewrite);
                             f.filter(apiGatewayFilter, -2);
                             f.requestRateLimiter(config -> {
-                                config.setKeyResolver(ipKeyResolver);
+//                                config.setKeyResolver(ipKeyResolver);
+                                config.setKeyResolver(pathKeyResolver);
                                 config.setRateLimiter(customRedisRateLimiter);
                             });
                             return f;

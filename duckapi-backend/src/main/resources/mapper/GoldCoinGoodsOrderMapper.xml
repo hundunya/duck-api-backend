@@ -2,16 +2,17 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="cn.hdy.backend.project.mapper.InvokeCountOrderMapper">
+<mapper namespace="cn.hdy.backend.project.mapper.GoldCoinGoodsOrderMapper">
 
-    <resultMap id="BaseResultMap" type="cn.hdy.backend.project.model.entity.InvokeCountOrder">
+    <resultMap id="BaseResultMap" type="cn.hdy.backend.project.model.entity.GoldCoinGoodsOrder">
             <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="userId" column="user_id" jdbcType="BIGINT"/>
             <result property="outTradeNo" column="out_trade_no" jdbcType="VARCHAR"/>
+            <result property="name" column="name" jdbcType="VARCHAR"/>
+            <result property="description" column="description" jdbcType="VARCHAR"/>
+            <result property="number" column="number" jdbcType="INTEGER"/>
             <result property="totalAmount" column="total_amount" jdbcType="DOUBLE"/>
             <result property="payAmount" column="pay_amount" jdbcType="DOUBLE"/>
-            <result property="interfaceId" column="interface_id" jdbcType="BIGINT"/>
-            <result property="userId" column="user_id" jdbcType="BIGINT"/>
-            <result property="invokeCount" column="invoke_count" jdbcType="INTEGER"/>
             <result property="status" column="status" jdbcType="INTEGER"/>
             <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
             <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
@@ -19,9 +20,9 @@
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,out_trade_no,total_amount,
-        pay_amount,interface_id,user_id,
-        invoke_count,status,create_time,
-        update_time,is_delete
+        id,user_id,out_trade_no,
+        name,description,number,
+        total_amount,pay_amount,status,
+        create_time,update_time,is_delete
     </sql>
 </mapper>

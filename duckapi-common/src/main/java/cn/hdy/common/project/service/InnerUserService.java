@@ -12,4 +12,11 @@ public interface InnerUserService {
      * @return 用户信息
      */
     User getInvokeUser(String accessKey);
+
+    /**
+     * 更新调用接口的用户金币余额
+     * @param invokeUser 调用者信息
+     * @return 更新是否成功
+     */
+    boolean updateGoldCoinBalance(User invokeUser);
 }

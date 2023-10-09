@@ -32,16 +32,6 @@ public class User implements Serializable {
     private String userPassword;
 
     /**
-     * 开放平台id
-     */
-    private String unionId;
-
-    /**
-     * 公众号openId
-     */
-    private String mpOpenId;
-
-    /**
      * 用户昵称
      */
     private String userName;
@@ -57,14 +47,14 @@ public class User implements Serializable {
     private String signature;
 
     /**
-     * 用户简介
-     */
-    private String userProfile;
-
-    /**
      * 用户角色：user/admin/ban
      */
     private String userRole;
+
+    /**
+     * 金币余额
+     */
+    private Integer goldCoinBalance;
 
     /**
      * API账号

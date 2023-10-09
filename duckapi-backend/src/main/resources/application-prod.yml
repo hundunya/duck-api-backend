@@ -7,17 +7,16 @@ spring:
   # todo 需替换配置
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/duck_api?useSSL=false
+    url: jdbc:mysql://43.138.159.214:3306/duck_api?useSSL=false
     username: duckapi
     password: Yang0122
   # Redis 配置
   # todo 需替换配置
   redis:
     database: 1
-    host: localhost
+    host: 8.137.49.206
     port: 6379
     timeout: 5000
-    password: 123456
 # 阿里支付配置
 alipay:
   appId: 9021000126675123
@@ -34,3 +33,19 @@ mybatis-plus:
   configuration:
     # 生产环境关闭日志
     log-impl: ''
+# dubbo配置
+dubbo:
+  application:
+    name: dubbo-springboot-gateway-consumer
+    qos-enable: true
+    qos-port: 33333
+    qos-accept-foreign-ip: false
+  protocol:
+    name: dubbo
+    port: -1
+  registry:
+    address: nacos://8.137.49.206:8848
+  consumer:
+    filter: -exception
+    # 超时时间
+    timeout: 10000

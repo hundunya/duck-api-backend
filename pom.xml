@@ -28,6 +28,12 @@
     </properties>
     <dependencyManagement>
         <dependencies>
+            <!-- https://mvnrepository.com/artifact/org.redisson/redisson -->
+            <dependency>
+                <groupId>org.redisson</groupId>
+                <artifactId>redisson</artifactId>
+                <version>3.23.0</version>
+            </dependency>
             <!--登录权限校验-->
             <!-- https://mvnrepository.com/artifact/com.auth0/java-jwt -->
             <dependency>
@@ -95,43 +101,18 @@
             </dependency>
 
             <!-- dubbo -->
-            <!--suppress VulnerableLibrariesLocal -->
             <dependency>
                 <groupId>org.apache.dubbo</groupId>
                 <artifactId>dubbo-spring-boot-starter</artifactId>
                 <version>3.2.0</version>
-                <exclusions>
-                    <exclusion>
-                        <artifactId>slf4j-reload4j</artifactId>
-                        <groupId>org.slf4j</groupId>
-                    </exclusion>
-                </exclusions>
             </dependency>
+            <!-- https://mvnrepository.com/artifact/org.apache.dubbo/dubbo-registry-nacos -->
             <dependency>
-                <groupId>org.apache.zookeeper</groupId>
-                <artifactId>zookeeper</artifactId>
-                <version>3.8.1</version>
-            </dependency>
-            <!-- https://mvnrepository.com/artifact/com.101tec/zkclient -->
-            <dependency>
-                <groupId>com.101tec</groupId>
-                <artifactId>zkclient</artifactId>
-                <version>0.11</version>
+                <groupId>org.apache.dubbo</groupId>
+                <artifactId>dubbo-registry-nacos</artifactId>
+                <version>3.2.0</version>
             </dependency>
 
-            <!-- https://mvnrepository.com/artifact/org.apache.curator/curator-recipes -->
-            <!--suppress VulnerableLibrariesLocal -->
-            <dependency>
-                <groupId>org.apache.curator</groupId>
-                <artifactId>curator-recipes</artifactId>
-                <version>5.4.0</version>
-            </dependency>
-            <!-- https://mvnrepository.com/artifact/org.apache.curator/curator-x-discovery -->
-            <dependency>
-                <groupId>org.apache.curator</groupId>
-                <artifactId>curator-x-discovery</artifactId>
-                <version>5.4.0</version>
-            </dependency>
         </dependencies>
     </dependencyManagement>
 

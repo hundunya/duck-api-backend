@@ -5,6 +5,7 @@ import cn.hdy.common.project.model.entity.User;
 import cn.hdy.common.project.service.InnerUserService;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.apache.dubbo.config.annotation.DubboService;
 
@@ -29,5 +30,13 @@ public class InnerUserServiceImpl extends ServiceImpl<UserMapper, User>
         User user = userMapper.selectOne(queryWrapper);
         user.setUserPassword(null);
         return user;
+    }
+
+    @Override
+    public boolean updateGoldCoinBalance(User invokeUser) {
+        UpdateWrapper<User> updateWrapper = new UpdateWrapper<>();
+        updateWrapper.eq("id", invokeUser.getId());
+        updateWrapper.set("gold_coin_balance", invokeUser.getGoldCoinBalance());
+        return this.update(updateWrapper);
     }
 }

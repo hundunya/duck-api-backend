@@ -6,7 +6,9 @@ import com.alipay.api.AlipayApiException;
 import com.alipay.api.AlipayClient;
 import com.alipay.api.DefaultAlipayClient;
 import com.alipay.api.internal.util.AlipaySignature;
+import com.alipay.api.request.AlipayTradeCancelRequest;
 import com.alipay.api.request.AlipayTradePrecreateRequest;
+import com.alipay.api.response.AlipayTradeCancelResponse;
 import com.alipay.api.response.AlipayTradePrecreateResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -73,6 +75,30 @@ public class AlipayUtils {
             throw new BusinessException(ErrorCode.OPERATION_ERROR, "下单失败！");
         }
         return response;
+    }
+
+    /**
+     * 取消订单
+     * @param alipayTradeCancelRequest 订单取消请求
+     */
+    public void execute(AlipayTradeCancelRequest alipayTradeCancelRequest){
+        if (alipayClient == null){
+            alipayClient = new DefaultAlipayClient(gatewayUrl, appId, privateKey, FORMAT, charset, publicKey, signType);
+        }
+
+        AlipayTradeCancelResponse response;
+        try {
+            response = alipayClient.execute(alipayTradeCancelRequest);
+        } catch (AlipayApiException e) {
+            log.info("取消订单失败 错误代码:{}, 错误信息:{}", e.getErrCode(), e.getErrMsg());
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "取消订单失败！");
+        }
+        log.info("AlipayTradeCancelResponse = {}", response.getBody());
+
+        if (!response.isSuccess()) {
+            log.info("取消订单失败 错误代码:{}, 错误信息:{}", response.getCode(), response.getMsg());
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "取消订单失败！");
+        }
     }
 
     /**

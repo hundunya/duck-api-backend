@@ -3,7 +3,6 @@ package cn.hdy.gateway.project.filter;
 import cn.hdy.common.project.model.entity.InterfaceInfo;
 import cn.hdy.common.project.model.entity.User;
 import cn.hdy.common.project.service.InnerInterfaceInfoService;
-import cn.hdy.common.project.service.InnerUserInterfaceService;
 import cn.hdy.common.project.service.InnerUserService;
 import cn.hdy.gateway.project.common.ResultUtils;
 import cn.hdy.gateway.project.utils.NetUtils;
@@ -14,11 +13,14 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.dubbo.config.annotation.DubboReference;
 import org.jetbrains.annotations.NotNull;
 import org.reactivestreams.Publisher;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferFactory;
 import org.springframework.core.io.buffer.DataBufferUtils;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -31,11 +33,13 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import javax.annotation.Resource;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author 混沌鸭
@@ -47,78 +51,104 @@ public class ApiGatewayFilter implements GatewayFilter {
     /**
      * IP白名单
      */
-    private final String[] WHITE_LIST = {"127.0.0.1", "192.168.3.28"};
+    private final String[] WHITE_LIST = {"127.0.0.1", "43.138.159.214", "192.168.3.28"};
     /**
      * 5 分钟
      */
     private final Long FIVE_MINUTES = 5 * 60L;
-
     @DubboReference
     private InnerInterfaceInfoService interfaceInfoService;
-
-    @DubboReference
-    private InnerUserInterfaceService userInterfaceService;
-
     @DubboReference
     private InnerUserService userService;
+    @Resource
+    private RedissonClient redissonClient;
+    @Resource
+    private RedisTemplate<String, String> redisTemplate;
+
+    private String online;
+    private User invokeUser;
+    private InterfaceInfo interfaceInfo;
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         ServerHttpRequest request = exchange.getRequest();
         ServerHttpResponse response = exchange.getResponse();
+
         // 1. 获取请求路径
+        long startTime = System.currentTimeMillis();
         URI uri = request.getURI();
         RequestPath path = request.getPath();
         HttpMethod method = request.getMethod();
+        long endTime = System.currentTimeMillis();
         log.info("==============================");
+        log.info("获取请求路径耗时: {}毫秒", endTime - startTime);
         log.info("请求url：{}", uri.toString() + path);
         log.info("请求路径：{}", path);
         log.info("请求方法：{}", method);
         log.info("==============================");
+
         // 2. 获取请求参数
+        startTime = System.currentTimeMillis();
         HttpHeaders headers = request.getHeaders();
-        String online = headers.getFirst("online");
+        online = headers.getFirst("online");
+        endTime = System.currentTimeMillis();
         log.info("==============================");
+        log.info("获取请求参数耗时: {}毫秒", endTime - startTime);
         log.info("请求参数：{}", headers);
         log.info("上线接口: {}", online);
+
         // 3. 记录请求日志
         log.info("请求日志记录");
         log.info("==============================");
         // 4. 判断黑白名单（防止DDOS攻击）
+        startTime = System.currentTimeMillis();
         String ip = NetUtils.getIpAddress(request);
-        if (StrUtil.isBlank(ip)){
+
+        if (StrUtil.isBlank(ip)) {
             // IP为空
             log.info("==============================");
             log.info("访问IP为空");
             log.info("==============================");
             return handleNoAuth(response);
         }
-        if (Arrays.stream(WHITE_LIST).noneMatch(s -> s.equals(ip))){
+        if (Arrays.stream(WHITE_LIST).noneMatch(s -> s.equals(ip))) {
             log.info("==============================");
             log.info("非白名单IP访问：{}", ip);
             log.info("==============================");
             return handleNoAuth(response);
         }
+        log.info("==============================");
+        endTime = System.currentTimeMillis();
+        log.info("判断黑白名单耗时: {}毫秒", endTime - startTime);
+        log.info("==============================");
+
         // 5. 权限校验（ak、sk是否正确）
+        startTime = System.currentTimeMillis();
         String accessKey = headers.getFirst("accessKey");
-        User invokeUser = userService.getInvokeUser(accessKey);
-        if ("true".equals(online)){
+        invokeUser = userService.getInvokeUser(accessKey);
+        if ("true".equals(online)) {
             // 本次操作为上线接口
             String userRole = invokeUser.getUserRole();
-            if (!"admin".equals(userRole)){
+            if (!"admin".equals(userRole)) {
                 return handleNoAuth(response);
             }
-        }else {
+        } else {
             // 本次操作为调用接口
-            if (!hasAuth(headers, invokeUser)){
+            if (!hasAuth(headers, invokeUser)) {
                 log.info("==============================");
                 log.info("用户权限不足");
                 log.info("==============================");
                 return handleNoAuth(response);
             }
         }
+        endTime = System.currentTimeMillis();
+        log.info("==============================");
+        log.info("权限校验耗时: {}毫秒", endTime - startTime);
+        log.info("==============================");
+
         // 6. 判断请求接口是否存在
-        if (method == null){
+        startTime = System.currentTimeMillis();
+        if (method == null) {
             log.info("==============================");
             log.info("请求接口不存在！");
             log.info("==============================");
@@ -126,57 +156,79 @@ public class ApiGatewayFilter implements GatewayFilter {
         }
         String value = path.value();
         value = value.substring(4);
-        InterfaceInfo interfaceInfo = interfaceInfoService.getInterfaceInfo(value, method.name());
-        if (interfaceInfo == null){
+        interfaceInfo = interfaceInfoService.getInterfaceInfo(value, method.name());
+        if (interfaceInfo == null) {
             log.info("==============================");
             log.info("接口不存在！");
             log.info("==============================");
             return handleNoAuth(response);
         }
-        // 7. 转发路由，调用接口
+        endTime = System.currentTimeMillis();
+        log.info("==============================");
+        log.info("判断请求接口是否存在耗时: {}毫秒", endTime - startTime);
+        log.info("==============================");
+
+        // 7. 判断用户剩余金币是否足够
+        startTime = System.currentTimeMillis();
+        if (!"true".equals(online)) {
+            if (invokeUser.getGoldCoinBalance() < interfaceInfo.getPrice()) {
+                // 用户剩余金币不足
+                return response.writeWith(Mono.fromSupplier(() -> {
+                    DataBufferFactory bufferFactory = response.bufferFactory();
+                    String message = "用户金币余额不足";
+                    return bufferFactory.wrap(message.getBytes());
+                }));
+            }
+        }
+        endTime = System.currentTimeMillis();
+        log.info("==============================");
+        log.info("判断请求接口是否存在耗时: {}毫秒", endTime - startTime);
+        log.info("==============================");
+
+        // 8. 转发路由，调用接口
+        return doResponse(exchange, chain);
+    }
+
+    private Mono<Void> doResponse(ServerWebExchange exchange, GatewayFilterChain chain) {
+        long startTime = System.currentTimeMillis();
+        ServerHttpResponse response = exchange.getResponse();
         try {
             HttpStatus statusCode = response.getStatusCode();
-            if(statusCode == HttpStatus.OK){
+            if (statusCode == HttpStatus.OK) {
                 ServerHttpResponseDecorator decoratedResponse = new ServerHttpResponseDecorator(response) {
 
                     @NotNull
                     @Override
                     public Mono<Void> writeWith(@NotNull Publisher<? extends DataBuffer> body) {
+                        long endTime = System.currentTimeMillis();
+                        log.info("==============================");
+                        log.info("路由转发耗时: {}毫秒", endTime - startTime);
+                        log.info("==============================");
                         if (body instanceof Flux) {
                             Flux<? extends DataBuffer> fluxBody = Flux.from(body);
                             DataBufferFactory bufferFactory = response.bufferFactory();
                             // 判断响应状态
                             HttpStatus statusCode = this.getStatusCode();
-                            if (!HttpStatus.OK.equals(statusCode)){
+                            if (!HttpStatus.OK.equals(statusCode)) {
                                 return handleInvokeErrorResponse(statusCode);
                             }
                             StringBuilder sb = new StringBuilder();
-                            if (!"true".equals(online)){
+                            if (!"true".equals(online)) {
                                 // 不是用户调用接口
                                 // 8. 调用成功，则调用次数+1
                                 try {
-                                    userInterfaceService.invokeCount(interfaceInfo.getId(), invokeUser.getId());
-                                    log.info("==============================");
-                                    log.info("接口调用计数成功");
-                                    log.info("==============================");
-                                } catch (Exception e) {
-                                    log.info("==============================");
-                                    log.info("接口调用计数失败");
-                                    log.info("异常描述: {}", e.getMessage());
-                                    log.info("==============================");
-                                    // 业务出现异常（包括：剩余调用次数为0、系统异常）
-                                    if (e.getMessage().length() >= 50){
-                                        return handleErrorResponse("系统错误");
+                                    postHandler(interfaceInfo.getId(), invokeUser.getId());
+                                } catch (Exception exception) {
+                                    Throwable e = exception.getCause();
+                                    if (e == null) {
+                                        e = exception;
                                     }
-                                    return super.writeWith(Mono.fromSupplier(() -> {
-                                        // 接口计数失败（包括没有剩余调用次数）
-                                        String message = e.getMessage();
-                                        log.info("==============================");
-                                        log.info("响应日志：{}", message);
-                                        log.info("==============================");
-                                        //返回响应结果
-                                        return bufferFactory.wrap(ResultUtils.error(40000, message));
-                                    }));
+                                    log.info("==============================");
+                                    log.info("接口调用计数失败！");
+                                    log.info("接口调用计数异常信息: {}", e.getMessage());
+                                    log.info("==============================");
+                                    e.printStackTrace();
+                                    return handleErrorResponse(e.getMessage());
                                 }
                             }
                             // 正常响应
@@ -212,12 +264,12 @@ public class ApiGatewayFilter implements GatewayFilter {
                      * @param statusCode 响应状态码
                      * @return 响应视图
                      */
-                    private Mono<Void> handleInvokeErrorResponse(HttpStatus statusCode){
+                    private Mono<Void> handleInvokeErrorResponse(HttpStatus statusCode) {
                         this.setStatusCode(HttpStatus.OK);
-                        if (statusCode == null){
+                        if (statusCode == null) {
                             return handleErrorResponse("系统错误");
                         }
-                        switch (statusCode){
+                        switch (statusCode) {
                             // 400: 错误请求
                             case BAD_REQUEST:
                                 return handleErrorResponse("参数错误");
@@ -250,7 +302,7 @@ public class ApiGatewayFilter implements GatewayFilter {
                      * @param message 错误提示
                      * @return 响应视图
                      */
-                    private Mono<Void> handleErrorResponse(String message){
+                    private Mono<Void> handleErrorResponse(String message) {
                         DataBufferFactory bufferFactory = response.bufferFactory();
                         return super.writeWith(Mono.fromSupplier(() -> {
                             //返回响应结果
@@ -261,7 +313,7 @@ public class ApiGatewayFilter implements GatewayFilter {
                 return chain.filter(exchange.mutate().response(decoratedResponse).build());
             }
             return chain.filter(exchange);//降级处理返回数据
-        }catch (Exception e){
+        } catch (Exception e) {
             log.info("==============================");
             log.error("gateway log exception.\n" + e);
             log.info("==============================");
@@ -269,7 +321,7 @@ public class ApiGatewayFilter implements GatewayFilter {
         }
     }
 
-    private Mono<Void> handleNoAuth(ServerHttpResponse response){
+    private Mono<Void> handleNoAuth(ServerHttpResponse response) {
         return response.writeWith(Mono.fromSupplier(() -> {
             DataBufferFactory bufferFactory = response.bufferFactory();
             //返回响应结果
@@ -279,53 +331,75 @@ public class ApiGatewayFilter implements GatewayFilter {
 
     /**
      * 权限校验
+     *
      * @param httpHeaders 请求头
-     * @param invokeUser 调用接口的用户
+     * @param invokeUser  调用接口的用户
      * @return 校验结果
      */
-    private boolean hasAuth(HttpHeaders httpHeaders, User invokeUser){
+    private boolean hasAuth(HttpHeaders httpHeaders, User invokeUser) {
         // 1、参数校验
-        if (!validHeaders(httpHeaders)){
+        if (!validHeaders(httpHeaders)) {
             return false;
         }
-        if (invokeUser == null){
+        if (invokeUser == null) {
             return false;
         }
+
         // 2、参数获取
         String accessKey = httpHeaders.getFirst("accessKey");
         String sign = httpHeaders.getFirst("sign");
         String nonce = httpHeaders.getFirst("nonce");
         String timestamp = httpHeaders.getFirst("timestamp");
         String body = httpHeaders.getFirst("body");
-        // 3、签名比较
+        if (StringUtils.isAnyBlank(accessKey, sign, nonce, timestamp)) {
+            return false;
+        }
+
+        String key = "DuckAPI:Gateway:Nonce_" + nonce;
+        // 3、判断该请求是否为重放请求
+        String value = redisTemplate.opsForValue().get(key);
+        if (value != null) {
+            // 该请求为重放请求
+            return false;
+        }
+
+        // 4、签名比较
         Map<String, String> headers = new HashMap<>();
         headers.put("accessKey", accessKey);
         headers.put("nonce", nonce);
         headers.put("timestamp", timestamp);
         headers.put("body", body);
-        return SignUtils.genSign(headers.toString(), invokeUser.getSecretKey()).equals(sign);
+        boolean success = SignUtils.genSign(headers.toString(), invokeUser.getSecretKey()).equals(sign);
+        if (success) {
+            // 签名验证通过
+            assert nonce != null;
+            // 设置随机数过期时间为5分钟
+            redisTemplate.opsForValue().set(key, nonce, FIVE_MINUTES, TimeUnit.SECONDS);
+        }
+        return success;
     }
 
     /**
      * 请求头参数校验
+     *
      * @param httpHeaders 请求头
      * @return 校验结果
      */
-    private boolean validHeaders(HttpHeaders httpHeaders){
-        if (httpHeaders == null){
+    private boolean validHeaders(HttpHeaders httpHeaders) {
+        if (httpHeaders == null) {
             return false;
         }
         String accessKey = httpHeaders.getFirst("accessKey");
         String sign = httpHeaders.getFirst("sign");
         String nonce = httpHeaders.getFirst("nonce");
         String timestamp = httpHeaders.getFirst("timestamp");
-        if (StringUtils.isBlank(sign)){
+        if (StringUtils.isBlank(sign)) {
             return false;
         }
-        if (timestamp == null){
+        if (timestamp == null) {
             return false;
         }
-        if (!StringUtils.isNumeric(timestamp)){
+        if (!StringUtils.isNumeric(timestamp)) {
             return false;
         }
         //判断时间戳是否过期
@@ -334,9 +408,37 @@ public class ApiGatewayFilter implements GatewayFilter {
         if (interval > FIVE_MINUTES) {
             return false;
         }
-        if (StringUtils.isBlank(nonce) || nonce.length()>5){
+        if (StringUtils.isBlank(nonce) || nonce.length() > 5) {
             return false;
         }
         return !StringUtils.isBlank(accessKey);
+    }
+
+    private void postHandler(Long interfaceId, Long userId) {
+        RLock lock = redissonClient.getLock("api:invoke_count:" + userId);
+        if (lock.tryLock()) {
+            try {
+                long startTime = System.currentTimeMillis();
+
+                // 获得锁成功，执行业务
+                // 1、用户余额减少
+                Integer goldCoinBalance = invokeUser.getGoldCoinBalance();
+                goldCoinBalance -= interfaceInfo.getPrice();
+                invokeUser.setGoldCoinBalance(goldCoinBalance);
+                userService.updateGoldCoinBalance(invokeUser);
+                // 2、接口调用总次数+1
+                interfaceInfoService.invokeCount(interfaceId);
+
+                long endTime = System.currentTimeMillis();
+                log.info("==============================");
+                log.info("接口调用计数耗时: {}毫秒", endTime - startTime);
+                log.info("接口调用计数成功");
+                log.info("==============================");
+            } finally {
+                lock.unlock();
+            }
+        } else {
+            throw new RuntimeException("系统异常");
+        }
     }
 }

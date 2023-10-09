@@ -46,7 +46,7 @@ public class InterfaceInfoServiceImpl extends ServiceImpl<InterfaceInfoMapper, I
         String description = interfaceInfo.getDescription();
         String url = interfaceInfo.getUrl();
         String method = interfaceInfo.getMethod();
-        Double price = interfaceInfo.getPrice();
+        Integer price = interfaceInfo.getPrice();
         String requestHeader = interfaceInfo.getRequestHeader();
         String responseHeader = interfaceInfo.getResponseHeader();
         String requestParam = interfaceInfo.getRequestParam();
@@ -67,7 +67,7 @@ public class InterfaceInfoServiceImpl extends ServiceImpl<InterfaceInfoMapper, I
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "接口地址过长");
         }
         if (price <= 0) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "接口调用单价必需大于0");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "接口调用单价必须大于0");
         }
         validateHeader(requestHeader);
         validateHeader(responseHeader);

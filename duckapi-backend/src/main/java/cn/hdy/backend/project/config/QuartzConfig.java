@@ -1,6 +1,6 @@
 package cn.hdy.backend.project.config;
 
-import cn.hdy.backend.project.job.InvokeCountOrderJobDetail;
+import cn.hdy.backend.project.job.GoldCoinGoodsOrderJobDetail;
 import org.quartz.JobDetail;
 import org.quartz.Trigger;
 import org.springframework.context.annotation.Bean;
@@ -21,11 +21,11 @@ public class QuartzConfig {
     /**
      * 定时任务
      */
-    @Bean(name = "invokeCountOrderJobDetailTask")
-    public MethodInvokingJobDetailFactoryBean invokeCountOrderJobDetail(InvokeCountOrderJobDetail invokeCountOrderJobDetail){
+    @Bean(name = "goldCoinGoodsOrderJobDetailTask")
+    public MethodInvokingJobDetailFactoryBean goldCoinGoodsOrderJobDetail(GoldCoinGoodsOrderJobDetail goldCoinGoodsOrderJobDetail){
         MethodInvokingJobDetailFactoryBean jobDetail = new MethodInvokingJobDetailFactoryBean();
         jobDetail.setConcurrent(true);
-        jobDetail.setTargetObject(invokeCountOrderJobDetail);
+        jobDetail.setTargetObject(goldCoinGoodsOrderJobDetail);
         jobDetail.setTargetMethod("doJob");
         return jobDetail;
     }
@@ -33,23 +33,23 @@ public class QuartzConfig {
     /**
      * 定时任务触发器
      */
-    @Bean(name = "invokeCountOrderJobDetailTrigger")
-    public SimpleTriggerFactoryBean invokeCountOrderJobDetailTrigger(JobDetail invokeCountOrderJobDetailTask){
+    @Bean(name = "goldCoinGoodsOrderJobDetailTrigger")
+    public SimpleTriggerFactoryBean goldCoinGoodsOrderJobDetailTrigger(JobDetail goldCoinGoodsOrderJobDetailTask){
         SimpleTriggerFactoryBean triggerFactoryBean = new SimpleTriggerFactoryBean();
-        triggerFactoryBean.setJobDetail(invokeCountOrderJobDetailTask);
+        triggerFactoryBean.setJobDetail(goldCoinGoodsOrderJobDetailTask);
         triggerFactoryBean.setStartDelay(0);
         triggerFactoryBean.setStartTime(new Date());
-        //每隔2分钟执行一次
-        triggerFactoryBean.setRepeatInterval(2 * 60 * 1000);
+        //每隔30s执行一次
+        triggerFactoryBean.setRepeatInterval(30 * 1000);
         return triggerFactoryBean;
     }
 
     @Bean
-    public SchedulerFactoryBean schedulerFactoryBean(Trigger invokeCountOrderJobDetailTrigger){
+    public SchedulerFactoryBean schedulerFactoryBean(Trigger goldCoinGoodsOrderJobDetailTrigger){
         SchedulerFactoryBean schedulerFactoryBean = new SchedulerFactoryBean();
         // 设置1分钟后执行
         schedulerFactoryBean.setStartupDelay(60);
-        schedulerFactoryBean.setTriggers(invokeCountOrderJobDetailTrigger);
+        schedulerFactoryBean.setTriggers(goldCoinGoodsOrderJobDetailTrigger);
         return schedulerFactoryBean;
     }
 }

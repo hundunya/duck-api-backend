@@ -14,19 +14,34 @@ spring:
   # todo 需替换配置
   redis:
     database: 1
-    host: localhost
+    host: 8.137.49.206
     port: 6379
     timeout: 5000
-    password: 123456
 # 阿里支付配置
 alipay:
   appId: 9021000126675123
   privateKey: MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCkhynZM+71qSZmJTlApGZ6E6N6Olvtzz7yyu26Bv90BaCOkdPW17Eg+zqPg6NGy4AfWm6wDvllq5ylG9w7I/eEzSSx7HUNGTgK6c31L+gaYuaBoCil68/f3QLP5AhdLkV/9erEo7mwF29WT0AoPmkONNiAW9Ux0YaJN5HPXMaH9tyK3gWBrq0epgqdNECoKW/pFL/bBoIjvretjS0IdfkJiBLAUIVFJ77ci8kiLVtG0uBGYjdUEbSYvgdIjd7owAmlA6IGxUp0S9ViDqYn2Y03Dkxdv4crt1MTZknLOh3X8dTaj7OphmFdCgliDMl4UUWmKp/YclLtqAYZzMBwL0ldAgMBAAECggEAV41h1KbRQ8M2nuayF9ckfVQUC4ggwWUmz1bzuKneqKQR86xgeZSgOrfWSua3LYY/cO/TtTbSuqrfGfHAeWxDXFU6cMAu7cB81TnkEtTig6Abn+FVoC3jmfJne6+ST9u+ukBoJSonNzDRW7Gip4fGqfuvNmcoBXHFUSHUIu/w6gqyDf4YMPjLm6AKoxFOgkfc+0jmHUSTZCjznwE9hS+I/PbcLA5MVpRO6feypyP/xRKp77f9aPw/X7/DXkcg0lUvK6VRkzT+6Ug19UocSBfOYTJaqbxfQ51OT9gICFrpIWqmEkIJjIDvZPmv+xb+Kx+xv7W9PkkAWjz3iK5uq+CIFQKBgQD7hqqLzYbLfM1tHt7obQbN3gyu7l6NIgB9S2OXdsElyjLYhcuKtun4RQac6522yHgeXoKBqykR7UBSWLog+Tjh7zVll7LTgvNdPr3FoVa57nh4lXYy1J8cjB+bh+6JccK3TD/AGzCtcO3LqT6WznlOBy5uv5VDxbtBgWZND+ouswKBgQCndFkhfhBQaXdhiRSNm1gx16ner1BUImI+71QiHzk1uVGIwCR6RD6K+kZbAK8zNQMrpnSy5mNQiXtC9AWxfXif4976ZvbKQWKxXkCXdOLG4qoSyuY/Uw96dNHOX+5Sh8pdDUt7gWWy0mc9RLcyvkuWpIftCSrv718NzCEDqJ+vrwKBgQCHyx6MN7vMZGarwPzrUuFXh8glMUAOxgqpmmf8P/rrIgztZN6M10/d37ZARdxx8C0ZiEDBLN0RdptBWfGzF5okMHcNkCbVll85OkROTFp8K0kTIO4dZzk3ulbeKzcXMTnEp//LAWL4YH2hdI/77yEChVIGLJyzaC8+oFPQywTNjQKBgQCKVNAInfZmJynqle43qNurmQgIIHVQe3MDoHu1EGwXWHblbCz2IAg2kNer953DxIhQ99oxq6bhciE0Rxeo7wjFtN2Pp505qdgYw87CD1oDiF2M1rZsG3aO55AmVxMudGSUiBYR+ewEVFHayDg6n/8be+GZy9f/i5PPdxDSz+rSmwKBgGcipsIWM4KNBMjBq/f7B3ubpBplhYLBFNybINun3PQ1cHXecGzwW9txTg1jt7AADBYibpvX15xZe/EKjHb4g7tiniSstfTwkn0pLgV1bFVjmaj7buasn1mSfOoGWhRF8wezxVdKerOrU1yW4O6YWtjcpV5SACHWRU3lD63fX0Jh
   publicKey: MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA4Bgi+N/Ons4ISozKVbYNaTSxbmlN45ubA1W5BGQpj2jkO0oBTSDrHizCI6gk+pUKbqtYRfLYQMo0Ec3A/5LMDTWN7DQ48x3GxXEV7Zf+XUSnqOCzUYOLOH7/KsFaivmNDT/PaCCJ422eNL8bld8C+KRimO6M8TZmOiFTK1mt3Q+v2qDMPPxohWQ4O9AGoB4CCDGJpu+g7AB54ISuWd2QFIrgYGvXlYEHhUuyX63BdI+053UWD3rHl+9Xg70h+6+8Ch0X1FA7uZhFkA6Gh9drLVU6sHZM9Ddnl/cI+VCrC4lOFpjSV8hXQOuIQLdt5khJ59NLmpxjYWVqp21JwOAY9QIDAQAB
-  notifyUrl: https://duck-api-backend.hundunya.cn/api/alipay/success
-  returnUrl: https://duck-api-backend.hundunya.cn/api/alipay/success
+  notifyUrl: https://e8bb-2409-8762-470-1-1622-0-3-ebd4.ngrok-free.app/api/alipay/success
+  returnUrl: https://e8bb-2409-8762-470-1-1622-0-3-ebd4.ngrok-free.app/api/alipay/success
   # 签名方式
   signType: RSA2
   # 支付宝网关
   gatewayUrl: https://openapi-sandbox.dl.alipaydev.com/gateway.do
   charset: utf-8
+# dubbo配置
+dubbo:
+  application:
+    name: dubbo-springboot-gateway-consumer
+    qos-enable: true
+    qos-port: 33333
+    qos-accept-foreign-ip: false
+  protocol:
+    name: dubbo
+    port: -1
+  registry:
+    address: nacos://localhost:8848
+  consumer:
+    filter: -exception
+    # 超时时间
+    timeout: 10000

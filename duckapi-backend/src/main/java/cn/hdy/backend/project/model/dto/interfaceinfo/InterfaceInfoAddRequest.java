@@ -55,7 +55,7 @@ public class InterfaceInfoAddRequest implements Serializable {
     /**
      * 接口调用一次的单价
      */
-    private Double price;
+    private Integer price;
 
     private static final long serialVersionUID = 1L;
 }

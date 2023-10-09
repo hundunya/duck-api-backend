@@ -1,8 +1,9 @@
 package cn.hdy.backend.project.job;
 
-import cn.hdy.backend.project.model.entity.InvokeCountOrder;
-import cn.hdy.backend.project.service.InvokeCountOrderService;
+import cn.hdy.backend.project.model.entity.GoldCoinGoodsOrder;
+import cn.hdy.backend.project.service.GoldCoinGoodsOrderService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -19,10 +20,10 @@ import java.util.List;
 @Data
 @Slf4j
 @Component
-public class InvokeCountOrderJobDetail {
+public class GoldCoinGoodsOrderJobDetail {
 
     @Resource
-    private InvokeCountOrderService invokeCountOrderService;
+    private GoldCoinGoodsOrderService goldCoinGoodsOrderService;
 
     /**
      * 订单5分钟过期
@@ -43,23 +44,26 @@ public class InvokeCountOrderJobDetail {
      */
     private void clearExpiredOrders(){
         // 1.查询所有未支付的订单
-        QueryWrapper<InvokeCountOrder> queryWrapper = new QueryWrapper<>();
+        QueryWrapper<GoldCoinGoodsOrder> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("status", 0);
-        List<InvokeCountOrder> invokeCountOrders = invokeCountOrderService.list(queryWrapper);
+        List<GoldCoinGoodsOrder> goldCoinGoodsOrders = goldCoinGoodsOrderService.list(queryWrapper);
         List<Long> ids = new ArrayList<>();
-        for (InvokeCountOrder invokeCountOrder : invokeCountOrders) {
-            Date createTime = invokeCountOrder.getCreateTime();
+        for (GoldCoinGoodsOrder goldCoinGoodsOrder : goldCoinGoodsOrders) {
+            Date createTime = goldCoinGoodsOrder.getCreateTime();
             // 创建时间，单位：毫秒
             long createTimeMillis = createTime.getTime();
             // 当前时间，单位：毫秒
             long currentTimeMillis = System.currentTimeMillis();
             if (currentTimeMillis - createTimeMillis > ORDER_EXPIRED_TIME){
-                ids.add(invokeCountOrder.getId());
+                ids.add(goldCoinGoodsOrder.getId());
             }
         }
         if (!ids.isEmpty()){
-            // 批量删除过期数据
-            boolean result = invokeCountOrderService.removeBatchByIds(ids);
+            // 批量取消过期数据
+            UpdateWrapper<GoldCoinGoodsOrder> updateWrapper = new UpdateWrapper<>();
+            updateWrapper.set("status", 2);
+            updateWrapper.in("id", ids);
+            boolean result = goldCoinGoodsOrderService.update(updateWrapper);
             if (!result){
                 log.info("批量删除过期订单失败！时间: {}", dateFormat.format(new Date()));
             }

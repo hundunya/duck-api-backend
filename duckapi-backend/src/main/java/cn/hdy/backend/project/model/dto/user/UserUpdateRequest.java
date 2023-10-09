@@ -32,14 +32,14 @@ public class UserUpdateRequest implements Serializable {
     private String signature;
 
     /**
-     * 简介
-     */
-    private String userProfile;
-
-    /**
      * 用户角色：user/admin/ban
      */
     private String userRole;
+
+    /**
+     * 金币余额
+     */
+    private Integer goldCoinBalance;
 
     private static final long serialVersionUID = 1L;
 }

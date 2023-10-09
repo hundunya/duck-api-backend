@@ -15,6 +15,6 @@ public class SignUtils {
      * @return 生成的签名
      */
     public static String genSign(String body, String secretKey){
-        return DigestUtil.sha256Hex(body+secretKey);
+        return DigestUtil.md5Hex(body+secretKey);
     }
 }
