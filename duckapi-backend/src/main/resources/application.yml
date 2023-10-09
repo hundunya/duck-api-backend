@@ -64,27 +64,3 @@ mybatis-plus:
       logic-delete-field: is_delete # 全局逻辑删除的实体字段名
       logic-delete-value: 1 # 逻辑已删除值（默认为 1）
       logic-not-delete-value: 0 # 逻辑未删除值（默认为 0）
-duck:
-  api:
-    access-key: DidiDuck
-    secret-key: DidiDuck
-# dubbo配置
-dubbo:
-  application:
-    name: dubbo-springboot-backend-provider
-    qos-enable: true
-    qos-port: 22222
-    qos-accept-foreign-ip: false
-  protocol:
-    name: dubbo
-    port: -1
-  registry:
-    id: nacos-registry
-    address: nacos://8.137.49.206:8848
-  provider:
-    filter: -exception
-    load-balance: round-robin
-    timeout: 10000
-    host: localhost
-  scan:
-    base-packages: cn.hdy.common.project.service

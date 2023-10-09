@@ -25,9 +25,7 @@ import java.util.Map;
 public class ApiClient {
     private String accessKey;
     private String secretKey;
-//    private final String BASE_URL = "http://localhost:8200/api";
-//    private final String BASE_URL = "https://duck-api-interface.hundunya.cn/api";
-    private final String BASE_URL = "http://110.41.15.223:8200/api";
+    private final String BASE_URL = "http://localhost:8200/api";
 
     private final Gson GSON = new Gson();
 

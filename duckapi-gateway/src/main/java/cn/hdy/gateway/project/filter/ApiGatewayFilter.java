@@ -51,7 +51,7 @@ public class ApiGatewayFilter implements GatewayFilter {
     /**
      * IP白名单
      */
-    private final String[] WHITE_LIST = {"127.0.0.1", "43.138.159.214", "192.168.3.28"};
+    private final String[] WHITE_LIST = {"127.0.0.1"};
     /**
      * 5 分钟
      */
