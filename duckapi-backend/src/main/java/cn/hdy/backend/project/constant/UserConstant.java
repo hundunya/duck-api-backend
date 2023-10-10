@@ -8,9 +8,9 @@ package cn.hdy.backend.project.constant;
 public interface UserConstant {
 
     /**
-     * 用户登录态键
+     * 登录过期时间
      */
-    String USER_LOGIN_STATE = "user_login";
+    Integer LOGIN_EXPIRE_TIME = 24 * 60 * 60;
 
     //  region 权限
 

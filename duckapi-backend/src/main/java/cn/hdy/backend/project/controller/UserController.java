@@ -346,17 +346,6 @@ public class UserController {
         return ResultUtils.success(true);
     }
 
-    /**
-     * 获取金币余额
-     * @param request 请求
-     * @return 用户余额
-     *
-     */
-    @PostMapping("/get/my/gold/coin/balance")
-    public BaseResponse<Integer> getMyGoldCoinBalance(HttpServletRequest request){
-        return ResultUtils.success(0);
-    }
-
     // endregion
 
     // region 密钥相关

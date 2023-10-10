@@ -22,6 +22,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
@@ -31,7 +32,10 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
+import static cn.hdy.backend.project.constant.UserConstant.LOGIN_EXPIRE_TIME;
 
 /**
  * 用户服务实现
@@ -49,6 +53,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Resource
     private UserMapper userMapper;
+    @Resource
+    private RedisTemplate<String, User> redisTemplate;
 
     @Override
     public long userRegister(String userAccount, String userPassword, String checkPassword) {
@@ -132,7 +138,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         String token = TokenUtils.getToken(user);
         response.setHeader("token", token);
         // 4. 记录用户的登录态
-        request.getSession().setAttribute(token, user);
+        String key = "DuckAPI:LoginUser:"+token;
+        redisTemplate.opsForValue().set(key, user, LOGIN_EXPIRE_TIME, TimeUnit.SECONDS);
         return this.getLoginUserVO(user);
     }
 
@@ -140,8 +147,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     public User getLoginUser(HttpServletRequest request) {
         // 先判断是否已登录
         String token = request.getHeader("token");
-        Object userObj = request.getSession().getAttribute(token);
-        User currentUser = (User) userObj;
+        String key = "DuckAPI:LoginUser:"+token;
+        User currentUser = redisTemplate.opsForValue().getAndExpire(key, LOGIN_EXPIRE_TIME, TimeUnit.SECONDS);
         if (currentUser == null || currentUser.getId() == null) {
             throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
         }
@@ -158,8 +165,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     public User getLoginUserPermitNull(HttpServletRequest request) {
         // 先判断是否已登录
         String token = request.getHeader("token");
-        Object userObj = request.getSession().getAttribute(token);
-        User currentUser = (User) userObj;
+        String key = "DuckAPI:LoginUser:"+token;
+        User currentUser = redisTemplate.opsForValue().getAndExpire(key, LOGIN_EXPIRE_TIME, TimeUnit.SECONDS);
         if (currentUser == null || currentUser.getId() == null) {
             return null;
         }
@@ -172,8 +179,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     public boolean isAdmin(HttpServletRequest request) {
         // 仅管理员可查询
         String token = request.getHeader("token");
-        Object userObj = request.getSession().getAttribute(token);
-        User user = (User) userObj;
+        String key = "DuckAPI:LoginUser:"+token;
+        User user = redisTemplate.opsForValue().getAndExpire(key, LOGIN_EXPIRE_TIME, TimeUnit.SECONDS);
         return isAdmin(user);
     }
 
@@ -185,11 +192,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     public boolean userLogout(HttpServletRequest request) {
         String token = request.getHeader("token");
-        if (request.getSession().getAttribute(token) == null) {
+        String key = "DuckAPI:LoginUser:"+token;
+        User user = redisTemplate.opsForValue().getAndExpire(key, LOGIN_EXPIRE_TIME, TimeUnit.SECONDS);
+        if (user == null) {
             throw new BusinessException(ErrorCode.OPERATION_ERROR, "未登录");
         }
         // 移除登录态
-        request.getSession().removeAttribute(token);
+        redisTemplate.delete(key);
         return true;
     }
 
